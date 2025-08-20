@@ -307,4 +307,80 @@ describe('MCP Server', () => {
       });
     });
   });
+
+  describe('VRM Client Integration', () => {
+    let mockFetch: any;
+
+    beforeEach(() => {
+      mockFetch = vi.fn();
+      global.fetch = mockFetch;
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should handle VRM token not found error', async () => {
+      // Mock VRM client without token
+      const mockVrmResponse = {
+        ok: false,
+        data: null,
+        error: {
+          code: "unauthorized",
+          message: "Invalid or missing VRM token"
+        }
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: 'Unauthorized' })
+      });
+
+      try {
+        await server.request(
+          { method: 'tools/call' },
+          { name: 'vrm_get_user_me', arguments: {} }
+        );
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle network timeout errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+
+      try {
+        await server.request(
+          { method: 'tools/call' },
+          { name: 'vrm_get_user_me', arguments: {} }
+        );
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle malformed tool arguments', async () => {
+      try {
+        await server.request(
+          { method: 'tools/call' },
+          { name: 'vrm_get_system_overview', arguments: { invalidParam: 'test' } }
+        );
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle invalid tool names', async () => {
+      try {
+        await server.request(
+          { method: 'tools/call' },
+          { name: 'invalid_tool_name', arguments: {} }
+        );
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
 });

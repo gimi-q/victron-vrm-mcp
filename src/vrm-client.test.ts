@@ -2071,6 +2071,143 @@ describe('VRMClient', () => {
       });
     });
 
+    describe('getSolarChargerSummary', () => {
+      it('should fetch solar charger summary with specific instance', async () => {
+        const mockSolarData = {
+          voltage: 48.2,
+          current: 12.5,
+          power: 602,
+          efficiency: 94.2,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockSolarData
+        });
+        
+        const result = await client.getSolarChargerSummary({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockSolarData);
+      });
+    });
+
+    describe('getEvChargerSummary', () => {
+      it('should fetch EV charger summary with specific instance', async () => {
+        const mockEvData = {
+          status: 'Charging',
+          power: 7200,
+          sessionEnergy: 15.4,
+          maxCurrent: 32,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockEvData
+        });
+        
+        const result = await client.getEvChargerSummary({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockEvData);
+      });
+    });
+
+    describe('getGlobalLinkSummary', () => {
+      it('should fetch global link summary with specific instance', async () => {
+        const mockGlobalData = {
+          status: 'Connected',
+          signalStrength: -65,
+          dataUsage: { tx: 1024, rx: 2048 },
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockGlobalData
+        });
+        
+        const result = await client.getGlobalLinkSummary({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockGlobalData);
+      });
+    });
+
+    describe('getMotorSummary', () => {
+      it('should fetch motor summary with specific instance', async () => {
+        const mockMotorData = {
+          rpm: 1800,
+          power: 2500,
+          torque: 13.3,
+          temperature: 65.2,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockMotorData
+        });
+        
+        const result = await client.getMotorSummary({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockMotorData);
+      });
+    });
+
+    describe('getPvInverterStatus', () => {
+      it('should fetch PV inverter status with specific instance', async () => {
+        const mockPvData = {
+          status: 'Running',
+          power: 3200,
+          efficiency: 96.8,
+          temperature: 42.1,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockPvData
+        });
+        
+        const result = await client.getPvInverterStatus({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockPvData);
+      });
+    });
+
+    describe('getTankSummary', () => {
+      it('should fetch tank summary with specific instance', async () => {
+        const mockTankData = {
+          level: 75.5,
+          capacity: 200,
+          fluid: 'Fresh Water',
+          status: 'Normal',
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockTankData
+        });
+        
+        const result = await client.getTankSummary({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockTankData);
+      });
+    });
+
     describe('getHistoricData', () => {
       it('should fetch historic data widget', async () => {
         const mockHistoricData = {
@@ -2105,6 +2242,94 @@ describe('VRMClient', () => {
       });
     });
 
+    describe('getTempSummaryGraph', () => {
+      it('should fetch temperature summary and graph data', async () => {
+        const mockTempData = {
+          temperatures: [
+            { instance: 0, temperature: 25.5, customName: 'Battery', location: 'Main Bay' },
+            { instance: 1, temperature: 28.2, customName: 'Inverter', location: 'Equipment' }
+          ],
+          graph: {
+            datasets: [
+              { time: 1640995200, temp0: 25.1, temp1: 28.0 },
+              { time: 1640995800, temp0: 25.5, temp1: 28.2 }
+            ]
+          }
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockTempData
+        });
+        
+        const result = await client.getTempSummaryGraph({ siteId: 12345 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockTempData);
+      });
+
+      it('should fetch temperature data with specific instance', async () => {
+        const mockTempData = { temperature: 26.1, instance: 1000 };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockTempData
+        });
+        
+        const result = await client.getTempSummaryGraph({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockTempData);
+      });
+    });
+
+    describe('getDcMeter', () => {
+      it('should fetch DC meter data with specific instance', async () => {
+        const mockDcData = {
+          power: 850.2,
+          voltage: 48.7,
+          current: 17.4,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockDcData
+        });
+        
+        const result = await client.getDcMeter({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockDcData);
+      });
+    });
+
+    describe('getLithiumBms', () => {
+      it('should fetch lithium BMS data with specific instance', async () => {
+        const mockBmsData = {
+          voltage: 51.2,
+          current: -15.3,
+          soc: 78,
+          temperature: 22.4,
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockBmsData
+        });
+        
+        const result = await client.getLithiumBms({ siteId: 12345, instance: 1000 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockBmsData);
+      });
+    });
+
     describe('getIoExtender', () => {
       it('should fetch IO extender input/output status', async () => {
         const mockIoData = {
@@ -2130,6 +2355,24 @@ describe('VRMClient', () => {
         });
         
         const result = await client.getIoExtender({ siteId: 12345 });
+        
+        expect(result.ok).toBe(true);
+        expect(result.data).toEqual(mockIoData);
+      });
+
+      it('should fetch IO extender data with specific instance', async () => {
+        const mockIoData = {
+          digitalInputs: [{ channel: 1, state: false, function: 'Switch', pullUp: true }],
+          instance: 1000
+        };
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockIoData
+        });
+        
+        const result = await client.getIoExtender({ siteId: 12345, instance: 1000 });
         
         expect(result.ok).toBe(true);
         expect(result.data).toEqual(mockIoData);
