@@ -1,6 +1,7 @@
 import { ToolInputs, VRMResponse } from "./schemas.js";
 
 const ALLOWED_PATHS = [
+  // Existing endpoints
   "/users/me",
   /^\/users\/\d+\/installations$/,
   /^\/installations\/\d+\/system-overview$/,
@@ -8,7 +9,57 @@ const ALLOWED_PATHS = [
   /^\/installations\/\d+\/overallstats$/,
   /^\/installations\/\d+\/alarms$/,
   /^\/installations\/\d+\/diagnostics$/,
-  /^\/installations\/\d+\/widgets\/Graph$/
+  /^\/installations\/\d+\/widgets\/Graph$/,
+  
+  // Batch 1: Authentication & User Management
+  "/auth/loginAsDemo",
+  "/auth/logout",
+  /^\/users\/\d+\/accesstokens$/,
+  /^\/users\/\d+\/search$/,
+  
+  // Batch 2: Installation Data & Downloads
+  /^\/installations\/\d+\/data-download$/,
+  /^\/installations\/\d+\/gps-download$/,
+  /^\/installations\/\d+\/tags$/,
+  /^\/installations\/\d+\/custom-widget$/,
+  /^\/installations\/\d+\/dynamic-ess-settings$/,
+  
+  // Batch 3: Installation Management
+  /^\/installations\/\d+\/reset-forecasts$/,
+  
+  // Batch 4: Widget State Endpoints
+  /^\/installations\/\d+\/widgets\/VeBusState$/,
+  /^\/installations\/\d+\/widgets\/InverterChargerState$/,
+  /^\/installations\/\d+\/widgets\/ChargerRelayState$/,
+  /^\/installations\/\d+\/widgets\/SolarChargerRelayState$/,
+  /^\/installations\/\d+\/widgets\/GatewayRelayState$/,
+  /^\/installations\/\d+\/widgets\/GatewayRelayTwoState$/,
+  /^\/installations\/\d+\/widgets\/Status$/,
+  
+  // Batch 5: Widget Warnings & Alarms
+  /^\/installations\/\d+\/widgets\/VeBusWarningsAndAlarms$/,
+  /^\/installations\/\d+\/widgets\/InverterChargerWarningsAndAlarms$/,
+  
+  // Batch 6: Widget Summary Endpoints
+  /^\/installations\/\d+\/widgets\/BatterySummary$/,
+  /^\/installations\/\d+\/widgets\/SolarChargerSummary$/,
+  /^\/installations\/\d+\/widgets\/EvChargerSummary$/,
+  /^\/installations\/\d+\/widgets\/GlobalLinkSummary$/,
+  /^\/installations\/\d+\/widgets\/MotorSummary$/,
+  /^\/installations\/\d+\/widgets\/PVInverterStatus$/,
+  /^\/installations\/\d+\/widgets\/TankSummary$/,
+  /^\/installations\/\d+\/widgets\/TempSummaryAndGraph$/,
+  /^\/installations\/\d+\/widgets\/DCMeter$/,
+  
+  // Batch 7: Widget Diagnostics & Data
+  /^\/installations\/\d+\/widgets\/BMSDiagnostics$/,
+  /^\/installations\/\d+\/widgets\/LithiumBMS$/,
+  /^\/installations\/\d+\/widgets\/HistoricData$/,
+  /^\/installations\/\d+\/widgets\/IOExtenderInOut$/,
+  
+  // Batch 8: System-Wide Endpoints
+  "/data-attributes",
+  "/firmwares"
 ];
 
 export class VRMClient {
@@ -250,5 +301,403 @@ export class VRMClient {
     }
     
     return response;
+  }
+  
+  // Batch 1: Authentication & User Management
+  async authLoginAsDemo(): Promise<VRMResponse> {
+    return this.vrmGet("/auth/loginAsDemo");
+  }
+  
+  async authLogout(): Promise<VRMResponse> {
+    return this.vrmGet("/auth/logout");
+  }
+  
+  async getUserAccessTokens(params: ToolInputs["vrm_get_user_access_tokens"]): Promise<VRMResponse> {
+    return this.vrmGet(`/users/${params.idUser}/accesstokens`);
+  }
+  
+  async searchUserInstallations(params: ToolInputs["vrm_search_user_installations"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.query) {
+      queryParams.append("query", params.query);
+    }
+    if (params.limit) {
+      queryParams.append("limit", params.limit.toString());
+    }
+    
+    return this.vrmGet(`/users/${params.idUser}/search`, queryParams);
+  }
+  
+  // Batch 2: Installation Data & Downloads
+  async downloadInstallationData(params: ToolInputs["vrm_download_installation_data"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    // Set defaults
+    const datatype = params.datatype || "log";
+    const format = params.format || "csv";
+    const decode = params.decode !== undefined ? params.decode : true;
+    
+    queryParams.append("datatype", datatype);
+    queryParams.append("format", format);
+    
+    if (params.start !== undefined) {
+      queryParams.append("start", params.start.toString());
+    }
+    if (params.end !== undefined) {
+      queryParams.append("end", params.end.toString());
+    }
+    
+    const response = await this.vrmGet(`/installations/${params.siteId}/data-download`, queryParams);
+    
+    // Process the response based on format and decode preference
+    if (response.ok && response.data && decode && format === 'csv') {
+      const originalData = response.data; // Store original data before processing
+      try {
+        // Decode base64 to UTF-8 string for CSV
+        const csvString = Buffer.from(originalData, 'base64').toString('utf-8');
+        
+        // Parse CSV into structured format
+        const lines = csvString.split('\n').filter(line => line.trim());
+        const headers = lines[0]?.split(',') || [];
+        const records = lines.slice(1).map(line => {
+          const values = line.split(',');
+          const record: any = {};
+          headers.forEach((header, index) => {
+            const value = values[index]?.trim();
+            // Try to parse as number, otherwise keep as string
+            record[header.trim()] = isNaN(Number(value)) ? value : Number(value);
+          });
+          return record;
+        });
+        
+        response.data = {
+          format,
+          datatype,
+          timeRange: { 
+            start: params.start, 
+            end: params.end,
+            startISO: params.start ? new Date(params.start).toISOString() : undefined,
+            endISO: params.end ? new Date(params.end).toISOString() : undefined
+          },
+          records,
+          summary: {
+            totalRecords: records.length,
+            columns: headers.map(h => h.trim())
+          }
+        };
+        response.meta.note = "CSV data parsed into structured format for easier analysis";
+      } catch (error) {
+        // If parsing fails, return original base64 data
+        response.data = {
+          format,
+          datatype,
+          timeRange: { start: params.start, end: params.end },
+          content: originalData,
+          encoding: "base64",
+          filename: `installation_${params.siteId}_${datatype}_${Date.now()}.${format}`
+        };
+        response.meta.note = "Failed to parse CSV data, returning as base64";
+      }
+    } else if (response.ok && response.data) {
+      // For binary formats or when decode=false, return base64
+      response.data = {
+        format,
+        datatype,
+        timeRange: { start: params.start, end: params.end },
+        content: response.data,
+        encoding: "base64",
+        filename: `installation_${params.siteId}_${datatype}_${Date.now()}.${format}`
+      };
+    }
+    
+    return response;
+  }
+  
+  async downloadGpsData(params: ToolInputs["vrm_download_gps_data"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.start !== undefined) {
+      queryParams.append("start", params.start.toString());
+    }
+    if (params.end !== undefined) {
+      queryParams.append("end", params.end.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/gps-download`, queryParams);
+  }
+  
+  async getInstallationTags(params: ToolInputs["vrm_get_installation_tags"]): Promise<VRMResponse> {
+    return this.vrmGet(`/installations/${params.siteId}/tags`);
+  }
+  
+  async getCustomWidget(params: ToolInputs["vrm_get_custom_widget"]): Promise<VRMResponse> {
+    return this.vrmGet(`/installations/${params.siteId}/custom-widget`);
+  }
+  
+  async getDynamicEssSettings(params: ToolInputs["vrm_get_dynamic_ess_settings"]): Promise<VRMResponse> {
+    return this.vrmGet(`/installations/${params.siteId}/dynamic-ess-settings`);
+  }
+  
+  // Batch 8: System-Wide Endpoints
+  async getDataAttributes(params: ToolInputs["vrm_get_data_attributes"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.filter) {
+      queryParams.append("filter", params.filter);
+    }
+    if (params.sort) {
+      queryParams.append("sort", params.sort);
+    }
+    if (params.limit) {
+      queryParams.append("limit", params.limit.toString());
+    }
+    if (params.offset !== undefined) {
+      queryParams.append("offset", params.offset.toString());
+    }
+    
+    return this.vrmGet("/data-attributes", queryParams);
+  }
+  
+  async getFirmwares(params: ToolInputs["vrm_get_firmwares"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.type) {
+      queryParams.append("type", params.type);
+    }
+    if (params.version) {
+      queryParams.append("version", params.version);
+    }
+    
+    return this.vrmGet("/firmwares", queryParams);
+  }
+
+  // Batch 3: Installation Management
+  async getResetForecasts(params: ToolInputs["vrm_get_reset_forecasts"]): Promise<VRMResponse> {
+    return this.vrmGet(`/installations/${params.siteId}/reset-forecasts`);
+  }
+
+  // Batch 4: Widget State Endpoints
+  async getVeBusState(params: ToolInputs["vrm_get_vebus_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/VeBusState`, queryParams);
+  }
+
+  async getInverterChargerState(params: ToolInputs["vrm_get_inverter_charger_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/InverterChargerState`, queryParams);
+  }
+
+  async getChargerRelayState(params: ToolInputs["vrm_get_charger_relay_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/ChargerRelayState`, queryParams);
+  }
+
+  async getSolarChargerRelayState(params: ToolInputs["vrm_get_solar_charger_relay_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/SolarChargerRelayState`, queryParams);
+  }
+
+  async getGatewayRelayState(params: ToolInputs["vrm_get_gateway_relay_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/GatewayRelayState`, queryParams);
+  }
+
+  async getGatewayRelayTwoState(params: ToolInputs["vrm_get_gateway_relay_two_state"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/GatewayRelayTwoState`, queryParams);
+  }
+
+  async getStatusWidget(params: ToolInputs["vrm_get_status_widget"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/Status`, queryParams);
+  }
+
+  // Batch 5: Widget Warnings & Alarms
+  async getVeBusWarningsAlarms(params: ToolInputs["vrm_get_vebus_warnings_alarms"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/VeBusWarningsAndAlarms`, queryParams);
+  }
+
+  async getInverterChargerWarningsAlarms(params: ToolInputs["vrm_get_inverter_charger_warnings_alarms"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/InverterChargerWarningsAndAlarms`, queryParams);
+  }
+
+  // Batch 6: Widget Summary Endpoints
+  async getBatterySummary(params: ToolInputs["vrm_get_battery_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/BatterySummary`, queryParams);
+  }
+
+  async getSolarChargerSummary(params: ToolInputs["vrm_get_solar_charger_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/SolarChargerSummary`, queryParams);
+  }
+
+  async getEvChargerSummary(params: ToolInputs["vrm_get_ev_charger_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/EvChargerSummary`, queryParams);
+  }
+
+  async getGlobalLinkSummary(params: ToolInputs["vrm_get_global_link_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/GlobalLinkSummary`, queryParams);
+  }
+
+  async getMotorSummary(params: ToolInputs["vrm_get_motor_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/MotorSummary`, queryParams);
+  }
+
+  async getPvInverterStatus(params: ToolInputs["vrm_get_pv_inverter_status"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/PVInverterStatus`, queryParams);
+  }
+
+  async getTankSummary(params: ToolInputs["vrm_get_tank_summary"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/TankSummary`, queryParams);
+  }
+
+  async getTempSummaryGraph(params: ToolInputs["vrm_get_temp_summary_graph"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/TempSummaryAndGraph`, queryParams);
+  }
+
+  async getDcMeter(params: ToolInputs["vrm_get_dc_meter"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/DCMeter`, queryParams);
+  }
+
+  // Batch 7: Widget Diagnostics & Data
+  async getBmsDiagnostics(params: ToolInputs["vrm_get_bms_diagnostics"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/BMSDiagnostics`, queryParams);
+  }
+
+  async getLithiumBms(params: ToolInputs["vrm_get_lithium_bms"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/LithiumBMS`, queryParams);
+  }
+
+  async getHistoricData(params: ToolInputs["vrm_get_historic_data"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/HistoricData`, queryParams);
+  }
+
+  async getIoExtender(params: ToolInputs["vrm_get_io_extender"]): Promise<VRMResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params.instance !== undefined) {
+      queryParams.append("instance", params.instance.toString());
+    }
+    
+    return this.vrmGet(`/installations/${params.siteId}/widgets/IOExtenderInOut`, queryParams);
   }
 }

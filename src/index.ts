@@ -127,6 +127,457 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           additionalProperties: false
         }
+      },
+      
+      // Batch 1: Authentication & User Management
+      {
+        name: "vrm_auth_login_as_demo",
+        description: "Login as a demo account to explore VRM functionality.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_auth_logout",
+        description: "Logout from the current VRM session.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_user_access_tokens",
+        description: "Get list of access tokens for a user account.",
+        inputSchema: {
+          type: "object",
+          required: ["idUser"],
+          properties: {
+            idUser: { type: "number", description: "User ID to get access tokens for" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_search_user_installations",
+        description: "Search through user's installations with optional filters.",
+        inputSchema: {
+          type: "object",
+          required: ["idUser"],
+          properties: {
+            idUser: { type: "number", description: "User ID to search installations for" },
+            query: { type: "string", description: "Search query string" },
+            limit: { type: "number", minimum: 1, maximum: 100, description: "Maximum number of results" }
+          },
+          additionalProperties: false
+        }
+      },
+      
+      // Batch 2: Installation Data & Downloads
+      {
+        name: "vrm_download_installation_data",
+        description: "Download installation data in various formats (CSV, Excel) with optional parsing for CSV.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            start: { type: "number", description: "Start timestamp (epoch milliseconds)" },
+            end: { type: "number", description: "End timestamp (epoch milliseconds)" },
+            datatype: { type: "string", enum: ["log", "benchmark", "kwh"], description: "Type of data to download", default: "log" },
+            format: { type: "string", enum: ["csv", "excelxml", "xls", "xlsx"], description: "File format", default: "csv" },
+            decode: { type: "boolean", description: "Whether to decode and parse CSV data", default: true }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_download_gps_data",
+        description: "Download GPS tracking data for mobile installations.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            start: { type: "number", description: "Start timestamp (epoch milliseconds)" },
+            end: { type: "number", description: "End timestamp (epoch milliseconds)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_installation_tags",
+        description: "Get tags and labels associated with an installation.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_custom_widget",
+        description: "Get custom widget configuration for an installation.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_dynamic_ess_settings",
+        description: "Get Dynamic ESS (Energy Storage System) configuration settings.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" }
+          },
+          additionalProperties: false
+        }
+      },
+      
+      // Batch 8: System-Wide Endpoints
+      {
+        name: "vrm_get_data_attributes",
+        description: "Get system-wide data attributes with filtering and sorting options.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            filter: { type: "string", description: "Filter string for attributes" },
+            sort: { type: "string", description: "Sort field for results" },
+            limit: { type: "number", minimum: 1, maximum: 1000, description: "Maximum number of results" },
+            offset: { type: "number", minimum: 0, description: "Offset for pagination" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_firmwares",
+        description: "Get available firmware versions and information.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: { type: "string", description: "Firmware type filter" },
+            version: { type: "string", description: "Specific version filter" }
+          },
+          additionalProperties: false
+        }
+      },
+
+      // Batch 3: Installation Management
+      {
+        name: "vrm_get_reset_forecasts",
+        description: "Get forecast reset timestamp for an installation.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" }
+          },
+          additionalProperties: false
+        }
+      },
+
+      // Batch 4: Widget State Endpoints
+      {
+        name: "vrm_get_vebus_state",
+        description: "Get VE.Bus system state information including inverter and charger status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_inverter_charger_state",
+        description: "Get inverter/charger state and operational status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_charger_relay_state",
+        description: "Get charger relay state and switching status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_solar_charger_relay_state",
+        description: "Get solar charger relay state and MPPT switching status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_gateway_relay_state",
+        description: "Get gateway relay state for remote switching control.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_gateway_relay_two_state",
+        description: "Get secondary gateway relay state for dual relay control.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_status_widget",
+        description: "Get general system status information and operational state.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+
+      // Batch 5: Widget Warnings & Alarms
+      {
+        name: "vrm_get_vebus_warnings_alarms",
+        description: "Get VE.Bus system warnings and alarms for troubleshooting.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_inverter_charger_warnings_alarms",
+        description: "Get inverter/charger specific warnings and alarms.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+
+      // Batch 6: Widget Summary Endpoints
+      {
+        name: "vrm_get_battery_summary",
+        description: "Get comprehensive battery summary including voltage, current, SoC, and health status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_solar_charger_summary",
+        description: "Get solar charger summary with MPPT performance and yield data.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_ev_charger_summary",
+        description: "Get EV charger summary with charging status and power delivery.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_global_link_summary",
+        description: "Get GlobalLink device summary for generator and tank monitoring.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_motor_summary",
+        description: "Get motor drive summary with RPM, power, and operational status.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_pv_inverter_status",
+        description: "Get PV inverter status with AC output and grid-tie information.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_tank_summary",
+        description: "Get tank sensor summary with fluid levels and capacity information.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_temp_summary_graph",
+        description: "Get temperature sensor summary and historical graph data.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_dc_meter",
+        description: "Get DC power meter readings with voltage, current, and power measurements.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+
+      // Batch 7: Widget Diagnostics & Data
+      {
+        name: "vrm_get_bms_diagnostics",
+        description: "Get Battery Management System diagnostics with cell voltages and balancing data.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_lithium_bms",
+        description: "Get Lithium battery BMS data with advanced cell monitoring and safety information.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_historic_data",
+        description: "Get historic data widget with time-series information and trends.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
+      },
+      {
+        name: "vrm_get_io_extender",
+        description: "Get IO extender input/output status for digital and analog signals.",
+        inputSchema: {
+          type: "object",
+          required: ["siteId"],
+          properties: {
+            siteId: { type: "number", description: "Installation/site ID" },
+            instance: { type: "number", description: "Device instance ID (optional)" }
+          },
+          additionalProperties: false
+        }
       }
     ];
   
@@ -141,6 +592,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     
     // List of valid tool names
     const validTools = [
+      // Original endpoints
       "vrm_get_user_me",
       "vrm_list_installations", 
       "vrm_get_system_overview",
@@ -148,7 +600,57 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       "vrm_get_overall_stats",
       "vrm_get_alarms",
       "vrm_get_diagnostics",
-      "vrm_get_widget_graph"
+      "vrm_get_widget_graph",
+      
+      // Batch 1: Authentication & User Management
+      "vrm_auth_login_as_demo",
+      "vrm_auth_logout",
+      "vrm_get_user_access_tokens",
+      "vrm_search_user_installations",
+      
+      // Batch 2: Installation Data & Downloads
+      "vrm_download_installation_data",
+      "vrm_download_gps_data",
+      "vrm_get_installation_tags",
+      "vrm_get_custom_widget",
+      "vrm_get_dynamic_ess_settings",
+      
+      // Batch 8: System-Wide Endpoints
+      "vrm_get_data_attributes",
+      "vrm_get_firmwares",
+      
+      // Batch 3: Installation Management
+      "vrm_get_reset_forecasts",
+      
+      // Batch 4: Widget State Endpoints
+      "vrm_get_vebus_state",
+      "vrm_get_inverter_charger_state",
+      "vrm_get_charger_relay_state",
+      "vrm_get_solar_charger_relay_state",
+      "vrm_get_gateway_relay_state",
+      "vrm_get_gateway_relay_two_state",
+      "vrm_get_status_widget",
+      
+      // Batch 5: Widget Warnings & Alarms
+      "vrm_get_vebus_warnings_alarms",
+      "vrm_get_inverter_charger_warnings_alarms",
+      
+      // Batch 6: Widget Summary Endpoints
+      "vrm_get_battery_summary",
+      "vrm_get_solar_charger_summary",
+      "vrm_get_ev_charger_summary",
+      "vrm_get_global_link_summary",
+      "vrm_get_motor_summary",
+      "vrm_get_pv_inverter_status",
+      "vrm_get_tank_summary",
+      "vrm_get_temp_summary_graph",
+      "vrm_get_dc_meter",
+      
+      // Batch 7: Widget Diagnostics & Data
+      "vrm_get_bms_diagnostics",
+      "vrm_get_lithium_bms",
+      "vrm_get_historic_data",
+      "vrm_get_io_extender"
     ];
     
     if (!validTools.includes(toolName)) {
@@ -191,6 +693,150 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
       case "vrm_get_widget_graph":
         result = await vrmClient.getWidgetGraph(validatedArgs as any);
+        break;
+        
+      // Batch 1: Authentication & User Management
+      case "vrm_auth_login_as_demo":
+        result = await vrmClient.authLoginAsDemo();
+        break;
+        
+      case "vrm_auth_logout":
+        result = await vrmClient.authLogout();
+        break;
+        
+      case "vrm_get_user_access_tokens":
+        result = await vrmClient.getUserAccessTokens(validatedArgs as any);
+        break;
+        
+      case "vrm_search_user_installations":
+        result = await vrmClient.searchUserInstallations(validatedArgs as any);
+        break;
+        
+      // Batch 2: Installation Data & Downloads
+      case "vrm_download_installation_data":
+        result = await vrmClient.downloadInstallationData(validatedArgs as any);
+        break;
+        
+      case "vrm_download_gps_data":
+        result = await vrmClient.downloadGpsData(validatedArgs as any);
+        break;
+        
+      case "vrm_get_installation_tags":
+        result = await vrmClient.getInstallationTags(validatedArgs as any);
+        break;
+        
+      case "vrm_get_custom_widget":
+        result = await vrmClient.getCustomWidget(validatedArgs as any);
+        break;
+        
+      case "vrm_get_dynamic_ess_settings":
+        result = await vrmClient.getDynamicEssSettings(validatedArgs as any);
+        break;
+        
+      // Batch 8: System-Wide Endpoints
+      case "vrm_get_data_attributes":
+        result = await vrmClient.getDataAttributes(validatedArgs as any);
+        break;
+        
+      case "vrm_get_firmwares":
+        result = await vrmClient.getFirmwares(validatedArgs as any);
+        break;
+
+      // Batch 3: Installation Management
+      case "vrm_get_reset_forecasts":
+        result = await vrmClient.getResetForecasts(validatedArgs as any);
+        break;
+
+      // Batch 4: Widget State Endpoints
+      case "vrm_get_vebus_state":
+        result = await vrmClient.getVeBusState(validatedArgs as any);
+        break;
+
+      case "vrm_get_inverter_charger_state":
+        result = await vrmClient.getInverterChargerState(validatedArgs as any);
+        break;
+
+      case "vrm_get_charger_relay_state":
+        result = await vrmClient.getChargerRelayState(validatedArgs as any);
+        break;
+
+      case "vrm_get_solar_charger_relay_state":
+        result = await vrmClient.getSolarChargerRelayState(validatedArgs as any);
+        break;
+
+      case "vrm_get_gateway_relay_state":
+        result = await vrmClient.getGatewayRelayState(validatedArgs as any);
+        break;
+
+      case "vrm_get_gateway_relay_two_state":
+        result = await vrmClient.getGatewayRelayTwoState(validatedArgs as any);
+        break;
+
+      case "vrm_get_status_widget":
+        result = await vrmClient.getStatusWidget(validatedArgs as any);
+        break;
+
+      // Batch 5: Widget Warnings & Alarms
+      case "vrm_get_vebus_warnings_alarms":
+        result = await vrmClient.getVeBusWarningsAlarms(validatedArgs as any);
+        break;
+
+      case "vrm_get_inverter_charger_warnings_alarms":
+        result = await vrmClient.getInverterChargerWarningsAlarms(validatedArgs as any);
+        break;
+
+      // Batch 6: Widget Summary Endpoints
+      case "vrm_get_battery_summary":
+        result = await vrmClient.getBatterySummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_solar_charger_summary":
+        result = await vrmClient.getSolarChargerSummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_ev_charger_summary":
+        result = await vrmClient.getEvChargerSummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_global_link_summary":
+        result = await vrmClient.getGlobalLinkSummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_motor_summary":
+        result = await vrmClient.getMotorSummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_pv_inverter_status":
+        result = await vrmClient.getPvInverterStatus(validatedArgs as any);
+        break;
+
+      case "vrm_get_tank_summary":
+        result = await vrmClient.getTankSummary(validatedArgs as any);
+        break;
+
+      case "vrm_get_temp_summary_graph":
+        result = await vrmClient.getTempSummaryGraph(validatedArgs as any);
+        break;
+
+      case "vrm_get_dc_meter":
+        result = await vrmClient.getDcMeter(validatedArgs as any);
+        break;
+
+      // Batch 7: Widget Diagnostics & Data
+      case "vrm_get_bms_diagnostics":
+        result = await vrmClient.getBmsDiagnostics(validatedArgs as any);
+        break;
+
+      case "vrm_get_lithium_bms":
+        result = await vrmClient.getLithiumBms(validatedArgs as any);
+        break;
+
+      case "vrm_get_historic_data":
+        result = await vrmClient.getHistoricData(validatedArgs as any);
+        break;
+
+      case "vrm_get_io_extender":
+        result = await vrmClient.getIoExtender(validatedArgs as any);
         break;
         
       default:
