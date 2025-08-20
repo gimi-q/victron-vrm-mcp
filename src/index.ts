@@ -1,8 +1,16 @@
 #!/usr/bin/env node
-import { config } from "dotenv";
-
-// Load environment variables from .env file
-config();
+// Only load .env file if VRM_TOKEN is not already set (for local development)
+if (!process.env.VRM_TOKEN) {
+  // Suppress dotenv output by redirecting stdout temporarily
+  const originalWrite = process.stdout.write;
+  process.stdout.write = (() => {}) as any;
+  
+  const dotenv = await import("dotenv");
+  dotenv.config();
+  
+  // Restore stdout
+  process.stdout.write = originalWrite;
+}
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
