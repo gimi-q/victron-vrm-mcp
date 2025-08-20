@@ -17,10 +17,28 @@
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "victron",
+    "vrm",
+    "mcp",
+    "model-context-protocol",
+    "energy",
+    "solar",
+    "battery",
+    "typescript",
+    "cli"
+  ],
+  "author": "Gimi <gimiandtara@gmail.com>",
+  "license": "MIT",
+  "description": "A Model Context Protocol (MCP) server providing read-only access to Victron VRM API v2 with all 41 GET endpoints implemented.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gimi-q/victron-vrm-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gimi-q/victron-vrm-mcp/issues"
+  },
+  "homepage": "https://github.com/gimi-q/victron-vrm-mcp#readme",
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
     "@types/node": "^24.3.0",
