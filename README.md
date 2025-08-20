@@ -36,6 +36,14 @@ Set the following environment variables:
 - `VRM_BASE_URL` (optional): Default is `https://vrmapi.victronenergy.com/v2`
 - `VRM_TOKEN_KIND` (optional): Either `Token` (default) or `Bearer`
 
+You can set these via shell env or a local `.env` file (auto‑loaded via `dotenv`). Example `.env`:
+
+```
+VRM_TOKEN=your-token-here
+VRM_BASE_URL=https://vrmapi.victronenergy.com/v2
+VRM_TOKEN_KIND=Token
+```
+
 ### Getting a VRM Token
 
 1. Log into VRM Portal
@@ -48,7 +56,12 @@ Set the following environment variables:
 ### As MCP Server (stdio)
 
 ```bash
+# Option A: env inline
 VRM_TOKEN=your-token-here npm start
+
+# Option B: use .env (recommended)
+echo "VRM_TOKEN=your-token-here" > .env
+npm start
 ```
 
 ### Claude Desktop Configuration
@@ -62,7 +75,7 @@ Add to your Claude Desktop config:
       "command": "node",
       "args": ["/path/to/victron_vrm_mcp/dist/index.js"],
       "env": {
-        "VRM_TOKEN": "your-token-here"
+        "VRM_TOKEN": "your-token-here" // or omit if using .env alongside the binary
       }
     }
   }
