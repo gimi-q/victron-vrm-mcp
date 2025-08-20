@@ -14,7 +14,6 @@ const ALLOWED_PATHS = [
   // Batch 1: Authentication & User Management
   "/auth/loginAsDemo",
   "/auth/logout",
-  /^\/users\/\d+\/accesstokens$/,
   /^\/users\/\d+\/search$/,
   
   // Batch 2: Installation Data & Downloads
@@ -310,10 +309,6 @@ export class VRMClient {
   
   async authLogout(): Promise<VRMResponse> {
     return this.vrmGet("/auth/logout");
-  }
-  
-  async getUserAccessTokens(params: ToolInputs["vrm_get_user_access_tokens"]): Promise<VRMResponse> {
-    return this.vrmGet(`/users/${params.idUser}/accesstokens`);
   }
   
   async searchUserInstallations(params: ToolInputs["vrm_search_user_installations"]): Promise<VRMResponse> {

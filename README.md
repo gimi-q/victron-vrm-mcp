@@ -84,7 +84,6 @@ Add to your Claude Desktop config:
 ### Authentication & User Management (4 tools)
 - `vrm_auth_login_as_demo` - Login as demo account
 - `vrm_auth_logout` - Logout from current session
-- `vrm_get_user_access_tokens` - List user's access tokens
 - `vrm_search_user_installations` - Search through user's installations
 
 ### Data Export & Downloads (5 tools)

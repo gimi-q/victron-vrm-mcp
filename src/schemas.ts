@@ -53,10 +53,6 @@ export const toolSchemas = {
   
   "vrm_auth_logout": z.object({}).strict(),
   
-  "vrm_get_user_access_tokens": z.object({
-    idUser: z.number()
-  }).strict(),
-  
   "vrm_search_user_installations": z.object({
     idUser: z.number(),
     query: z.string().optional(),

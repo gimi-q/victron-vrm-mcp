@@ -154,18 +154,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "vrm_get_user_access_tokens",
-        description: "Get list of access tokens for a user account.",
-        inputSchema: {
-          type: "object",
-          required: ["idUser"],
-          properties: {
-            idUser: { type: "number", description: "User ID to get access tokens for" }
-          },
-          additionalProperties: false
-        }
-      },
-      {
         name: "vrm_search_user_installations",
         description: "Search through user's installations with optional filters.",
         inputSchema: {
@@ -610,7 +598,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // Batch 1: Authentication & User Management
       "vrm_auth_login_as_demo",
       "vrm_auth_logout",
-      "vrm_get_user_access_tokens",
       "vrm_search_user_installations",
       
       // Batch 2: Installation Data & Downloads
@@ -707,10 +694,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
       case "vrm_auth_logout":
         result = await vrmClient.authLogout();
-        break;
-        
-      case "vrm_get_user_access_tokens":
-        result = await vrmClient.getUserAccessTokens(validatedArgs as any);
         break;
         
       case "vrm_search_user_installations":

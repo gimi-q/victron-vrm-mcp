@@ -939,47 +939,6 @@ describe('VRMClient', () => {
       });
     });
 
-    describe('getUserAccessTokens', () => {
-      it('should fetch user access tokens', async () => {
-        const mockTokensData = {
-          records: [
-            { id: 1, name: 'Personal Token', created: '2024-01-01T00:00:00Z', lastUsed: '2024-01-15T10:30:00Z' },
-            { id: 2, name: 'API Integration', created: '2024-01-05T00:00:00Z', lastUsed: '2024-01-16T09:15:00Z' }
-          ]
-        };
-        
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => mockTokensData
-        });
-        
-        const result = await client.getUserAccessTokens({ idUser: 12345 });
-        
-        expect(result.ok).toBe(true);
-        expect(result.data).toEqual(mockTokensData.records);
-        expect(mockFetch).toHaveBeenCalledWith(
-          'https://vrmapi.victronenergy.com/v2/users/12345/accesstokens',
-          expect.objectContaining({
-            method: 'GET'
-          })
-        );
-      });
-
-      it('should handle access tokens errors', async () => {
-        mockFetch.mockResolvedValueOnce({
-          ok: false,
-          status: 403,
-          json: async () => ({ message: 'Access denied to user tokens' })
-        });
-        
-        const result = await client.getUserAccessTokens({ idUser: 99999 });
-        
-        expect(result.ok).toBe(false);
-        expect(result.error?.code).toBe('auth');
-      });
-    });
-
     describe('searchUserInstallations', () => {
       it('should search installations with query', async () => {
         const mockSearchResults = {
