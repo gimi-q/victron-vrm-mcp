@@ -18,7 +18,9 @@ export const toolSchemas = {
     type: z.enum(["venus", "live_feed", "consumption", "kwh", "solar_yield", "forecast"]),
     interval: z.string().optional(),
     start: z.number().optional(),
-    end: z.number().optional()
+    end: z.number().optional(),
+    attributeCodes: z.array(z.string()).optional(),
+    show_instance: z.boolean().optional()
   }).strict(),
   
   "vrm_get_overall_stats": z.object({
@@ -33,7 +35,11 @@ export const toolSchemas = {
     siteId: z.number(),
     activeOnly: z.boolean().optional(),
     page: z.number().min(1).optional(),
-    pageSize: z.number().min(1).max(200).optional()
+    pageSize: z.number().min(1).max(200).optional(),
+    start: z.number().optional(),
+    end: z.number().optional(),
+    from: z.number().optional(),
+    to: z.number().optional()
   }).strict(),
   
   "vrm_get_diagnostics": z.object({
@@ -65,8 +71,10 @@ export const toolSchemas = {
     start: z.number().optional(),
     end: z.number().optional(),
     datatype: z.enum(["log", "benchmark", "kwh"]).optional(),
-    format: z.enum(["csv", "excelxml", "xls", "xlsx"]).optional(),
-    decode: z.boolean().optional()
+    format: z.enum(["csv", "excelxml", "xls", "xlsx", "html"]).optional(),
+    decode: z.boolean().optional(),
+    debug: z.boolean().optional(),
+    async: z.boolean().optional()
   }).strict(),
   
   "vrm_download_gps_data": z.object({
@@ -97,7 +105,11 @@ export const toolSchemas = {
   
   "vrm_get_firmwares": z.object({
     type: z.string().optional(),
-    version: z.string().optional()
+    version: z.string().optional(),
+    feedChannel: z.string().optional(),
+    victronConnectVersion: z.string().optional(),
+    limit: z.number().min(1).max(1000).optional(),
+    offset: z.number().min(0).optional()
   }).strict(),
 
   // Batch 3: Installation Management  
@@ -144,7 +156,9 @@ export const toolSchemas = {
   // Batch 5: Widget Warnings & Alarms
   "vrm_get_vebus_warnings_alarms": z.object({
     siteId: z.number(),
-    instance: z.number().optional()
+    instance: z.number().optional(),
+    start: z.number().optional(),
+    end: z.number().optional()
   }).strict(),
 
   "vrm_get_inverter_charger_warnings_alarms": z.object({

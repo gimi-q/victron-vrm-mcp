@@ -1,15 +1,28 @@
 #!/usr/bin/env node
 // Only load .env file if VRM_TOKEN is not already set (for local development)
 if (!process.env.VRM_TOKEN) {
-  // Suppress dotenv output by redirecting stdout temporarily
-  const originalWrite = process.stdout.write;
-  process.stdout.write = (() => {}) as any;
+  // Temporarily silence all output during dotenv loading
+  const originalStdoutWrite = process.stdout.write;
+  const originalStderrWrite = process.stderr.write;
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
   
-  const dotenv = await import("dotenv");
-  dotenv.config();
+  // Silence all output
+  process.stdout.write = () => true;
+  process.stderr.write = () => true;
+  console.log = () => {};
+  console.error = () => {};
   
-  // Restore stdout
-  process.stdout.write = originalWrite;
+  try {
+    const dotenv = await import("dotenv");
+    dotenv.config();
+  } finally {
+    // Restore all output functions
+    process.stdout.write = originalStdoutWrite;
+    process.stderr.write = originalStderrWrite;
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
+  }
 }
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -77,7 +90,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             type: { type: "string", enum: ["venus", "live_feed", "consumption", "kwh", "solar_yield", "forecast"], description: "Type of stats to retrieve" },
             interval: { type: "string", description: "Time interval (e.g., '15mins', 'hours', 'days')", default: "15mins" },
             start: { type: "number", description: "Start time as epoch milliseconds" },
-            end: { type: "number", description: "End time as epoch milliseconds" }
+            end: { type: "number", description: "End time as epoch milliseconds" },
+            attributeCodes: { type: "array", items: { type: "string" }, description: "Array of attribute codes to filter specific data points" },
+            show_instance: { type: "boolean", description: "Whether to show device instance information in response" }
           },
           additionalProperties: false
         }
@@ -100,7 +115,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "vrm_get_alarms",
-        description: "Check for any system alarms or alerts from your solar/battery installation.",
+        description: "Check for any system alarms or alerts from your solar/battery installation. Supports historical time ranges to retrieve past alarms and warnings.",
         inputSchema: {
           type: "object",
           required: ["siteId"],
@@ -108,7 +123,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             siteId: { type: "number", description: "Installation/site ID" },
             activeOnly: { type: "boolean", description: "Show only active alarms", default: false },
             page: { type: "number", minimum: 1, description: "Page number for pagination" },
-            pageSize: { type: "number", minimum: 1, maximum: 200, description: "Number of alarms per page" }
+            pageSize: { type: "number", minimum: 1, maximum: 200, description: "Number of alarms per page" },
+            start: { type: "number", description: "Start time as epoch milliseconds for historical alarms" },
+            end: { type: "number", description: "End time as epoch milliseconds for historical alarms" },
+            from: { type: "number", description: "Alternative start time parameter" },
+            to: { type: "number", description: "Alternative end time parameter" }
           },
           additionalProperties: false
         }
@@ -383,13 +402,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       // Batch 5: Widget Warnings & Alarms
       {
         name: "vrm_get_vebus_warnings_alarms",
-        description: "Get VE.Bus system warnings and alarms for troubleshooting.",
+        description: "Get VE.Bus system warnings and alarms for troubleshooting. Supports historical time ranges to retrieve past warnings like overload events.",
         inputSchema: {
           type: "object",
           required: ["siteId"],
           properties: {
             siteId: { type: "number", description: "Installation/site ID" },
-            instance: { type: "number", description: "Device instance ID (optional)" }
+            instance: { type: "number", description: "Device instance ID (optional)" },
+            start: { type: "number", description: "Start time as epoch milliseconds for historical warnings" },
+            end: { type: "number", description: "End time as epoch milliseconds for historical warnings" }
           },
           additionalProperties: false
         }

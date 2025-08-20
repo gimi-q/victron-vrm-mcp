@@ -228,6 +228,18 @@ export class VRMClient {
       queryParams.append("end", params.end.toString());
     }
     
+    // Add attributeCodes array parameter
+    if (params.attributeCodes) {
+      params.attributeCodes.forEach(code => {
+        queryParams.append("attributeCodes[]", code);
+      });
+    }
+    
+    // Add show_instance parameter
+    if (params.show_instance !== undefined) {
+      queryParams.append("show_instance", params.show_instance.toString());
+    }
+    
     return this.vrmGet(`/installations/${params.siteId}/stats`, queryParams);
   }
   
@@ -268,6 +280,20 @@ export class VRMClient {
     }
     if (params.pageSize !== undefined) {
       queryParams.append("pageSize", params.pageSize.toString());
+    }
+    
+    // Add time range parameters for historical alarms
+    if (params.start !== undefined) {
+      queryParams.append("start", params.start.toString());
+    }
+    if (params.end !== undefined) {
+      queryParams.append("end", params.end.toString());
+    }
+    if (params.from !== undefined) {
+      queryParams.append("from", params.from.toString());
+    }
+    if (params.to !== undefined) {
+      queryParams.append("to", params.to.toString());
     }
     
     return this.vrmGet(`/installations/${params.siteId}/alarms`, queryParams);
@@ -343,17 +369,58 @@ export class VRMClient {
       queryParams.append("end", params.end.toString());
     }
     
+    // Add debug parameter
+    if (params.debug !== undefined) {
+      queryParams.append("debug", params.debug.toString());
+    }
+    
+    // Add async parameter
+    if (params.async !== undefined) {
+      queryParams.append("async", params.async.toString());
+    }
+    
     const response = await this.vrmGet(`/installations/${params.siteId}/data-download`, queryParams);
     
     // Process the response based on format and decode preference
     if (response.ok && response.data && decode && format === 'csv') {
       const originalData = response.data; // Store original data before processing
       try {
+        // Check if data looks like base64
+        if (typeof originalData !== 'string' || originalData.length === 0) {
+          throw new Error('Invalid data format - not a string or empty');
+        }
+
         // Decode base64 to UTF-8 string for CSV
         const csvString = Buffer.from(originalData, 'base64').toString('utf-8');
         
+        // Validate CSV string isn't corrupted
+        if (csvString.includes('\u0000') || csvString.length < 10) {
+          throw new Error('Corrupted CSV data detected');
+        }
+        
         // Parse CSV into structured format
         const lines = csvString.split('\n').filter(line => line.trim());
+        
+        if (lines.length === 0) {
+          response.data = {
+            format,
+            datatype,
+            timeRange: { 
+              start: params.start, 
+              end: params.end,
+              startISO: params.start ? new Date(params.start).toISOString() : undefined,
+              endISO: params.end ? new Date(params.end).toISOString() : undefined
+            },
+            records: [],
+            summary: {
+              totalRecords: 0,
+              columns: []
+            }
+          };
+          response.meta.note = "No data found for the specified time range";
+          return response;
+        }
+
         const headers = lines[0]?.split(',') || [];
         const records = lines.slice(1).map(line => {
           const values = line.split(',');
@@ -383,16 +450,17 @@ export class VRMClient {
         };
         response.meta.note = "CSV data parsed into structured format for easier analysis";
       } catch (error) {
-        // If parsing fails, return original base64 data
+        // If parsing fails, return original base64 data with better error info
         response.data = {
           format,
           datatype,
           timeRange: { start: params.start, end: params.end },
           content: originalData,
           encoding: "base64",
-          filename: `installation_${params.siteId}_${datatype}_${Date.now()}.${format}`
+          filename: `installation_${params.siteId}_${datatype}_${Date.now()}.${format}`,
+          parseError: error instanceof Error ? error.message : "Unknown parsing error"
         };
-        response.meta.note = "Failed to parse CSV data, returning as base64";
+        response.meta.note = `Failed to parse CSV data: ${error instanceof Error ? error.message : "Unknown error"}`;
       }
     } else if (response.ok && response.data) {
       // For binary formats or when decode=false, return base64
@@ -462,6 +530,18 @@ export class VRMClient {
     }
     if (params.version) {
       queryParams.append("version", params.version);
+    }
+    if (params.feedChannel) {
+      queryParams.append("feedChannel", params.feedChannel);
+    }
+    if (params.victronConnectVersion) {
+      queryParams.append("victronConnectVersion", params.victronConnectVersion);
+    }
+    if (params.limit) {
+      queryParams.append("limit", params.limit.toString());
+    }
+    if (params.offset !== undefined) {
+      queryParams.append("offset", params.offset.toString());
     }
     
     return this.vrmGet("/firmwares", queryParams);
@@ -549,6 +629,14 @@ export class VRMClient {
     
     if (params.instance !== undefined) {
       queryParams.append("instance", params.instance.toString());
+    }
+    
+    // Add time range parameters for historical warnings/alarms
+    if (params.start !== undefined) {
+      queryParams.append("start", params.start.toString());
+    }
+    if (params.end !== undefined) {
+      queryParams.append("end", params.end.toString());
     }
     
     return this.vrmGet(`/installations/${params.siteId}/widgets/VeBusWarningsAndAlarms`, queryParams);
