@@ -1,20 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock needs to be hoisted
-vi.mock('undici');
+// Mock the global fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 describe('VRMClient', () => {
   let client: any;
-  let mockFetch: any;
   
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
-    
-    // Set up the mock for undici
-    const undiciModule = await import('undici');
-    mockFetch = vi.fn();
-    (undiciModule as any).fetch = mockFetch;
     
     process.env.VRM_TOKEN = 'test-token';
     process.env.VRM_BASE_URL = 'https://vrmapi.victronenergy.com/v2';
@@ -54,12 +49,7 @@ describe('VRMClient', () => {
     });
     
     it('should reject invalid paths', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ success: true })
-      });
-      
+      // This test doesn't need a fetch mock since it should throw before making a request
       const invalidClient = Object.create(client);
       await expect(invalidClient.vrmGet('/invalid/path')).rejects.toThrow('Disallowed path');
     });

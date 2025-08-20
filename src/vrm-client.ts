@@ -1,4 +1,3 @@
-import { fetch } from "undici";
 import { ToolInputs, VRMResponse } from "./schemas.js";
 
 const ALLOWED_PATHS = [
@@ -137,7 +136,7 @@ export class VRMClient {
     return this.vrmGet("/users/me");
   }
   
-  async listInstallations(params: ToolInputs["vrm.list_installations"]): Promise<VRMResponse> {
+  async listInstallations(params: ToolInputs["vrm_list_installations"]): Promise<VRMResponse> {
     let idUser = params.idUser;
     
     if (!idUser) {
@@ -162,11 +161,11 @@ export class VRMClient {
     return this.vrmGet(`/users/${idUser}/installations`, queryParams);
   }
   
-  async getSystemOverview(params: ToolInputs["vrm.get_system_overview"]): Promise<VRMResponse> {
+  async getSystemOverview(params: ToolInputs["vrm_get_system_overview"]): Promise<VRMResponse> {
     return this.vrmGet(`/installations/${params.siteId}/system-overview`);
   }
   
-  async getStats(params: ToolInputs["vrm.get_stats"]): Promise<VRMResponse> {
+  async getStats(params: ToolInputs["vrm_get_stats"]): Promise<VRMResponse> {
     const queryParams = new URLSearchParams();
     queryParams.append("type", params.type);
     
@@ -182,7 +181,7 @@ export class VRMClient {
     return this.vrmGet(`/installations/${params.siteId}/stats`, queryParams);
   }
   
-  async getOverallStats(params: ToolInputs["vrm.get_overall_stats"]): Promise<VRMResponse> {
+  async getOverallStats(params: ToolInputs["vrm_get_overall_stats"]): Promise<VRMResponse> {
     const queryParams = new URLSearchParams();
     
     const type = params.type || "custom";
@@ -208,7 +207,7 @@ export class VRMClient {
     return response;
   }
   
-  async getAlarms(params: ToolInputs["vrm.get_alarms"]): Promise<VRMResponse> {
+  async getAlarms(params: ToolInputs["vrm_get_alarms"]): Promise<VRMResponse> {
     const queryParams = new URLSearchParams();
     
     if (params.activeOnly) {
@@ -224,7 +223,7 @@ export class VRMClient {
     return this.vrmGet(`/installations/${params.siteId}/alarms`, queryParams);
   }
   
-  async getDiagnostics(params: ToolInputs["vrm.get_diagnostics"]): Promise<VRMResponse> {
+  async getDiagnostics(params: ToolInputs["vrm_get_diagnostics"]): Promise<VRMResponse> {
     const queryParams = new URLSearchParams();
     
     const count = params.count || 200;
@@ -236,7 +235,7 @@ export class VRMClient {
     return this.vrmGet(`/installations/${params.siteId}/diagnostics`, queryParams);
   }
   
-  async getWidgetGraph(params: ToolInputs["vrm.get_widget_graph"]): Promise<VRMResponse> {
+  async getWidgetGraph(params: ToolInputs["vrm_get_widget_graph"]): Promise<VRMResponse> {
     const queryParams = new URLSearchParams();
     
     params.attributeCodes.forEach(code => {
